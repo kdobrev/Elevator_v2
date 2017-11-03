@@ -1,0 +1,109 @@
+html {
+	height: 100%;
+	box-sizing: border-box;
+}
+body {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  text-align: center;
+  font-family: verdana;
+  font-size: medium;
+}
+.c {
+  text-align: center;
+}
+div{
+  padding: 5px;
+}
+@media only screen and (max-width: 500px) {
+	input, select{
+		width: 95%;
+		padding: 5px;
+		font-size: 1.1rem;
+		margin: 5px 5px 10px 5px;
+		border: 1px solid #ccc;
+	}
+}
+@media only screen and (min-width: 501px) {
+	input, select{
+		width: 380px;
+		padding: 5px;
+		font-size: 1.1rem;
+		margin: 5px 5px 10px 5px;
+		border: 1px solid #ccc;
+	}
+}
+input:focus, textarea:focus, select:focus {
+  box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+  padding: 5px;
+  border: 1px solid rgba(81, 203, 238, 1);
+  margin: 5px 5px 10px 5px;
+}
+#multi:hover{
+	text-decoration:underline;
+	cursor: pointer;
+}
+a:hover{
+	text-decoration:underline;
+	cursor: pointer;
+}
+.header {
+    background:#ccd;
+    border:1px solid #CCC;
+    width:95%;
+    margin:0px auto;
+}
+.footer {
+  position: absolute;
+  margin-top: 10px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  font-size: 0.6rem;
+  padding: 0.2rem;
+  background-color: #ccd;
+  text-align: center;
+}
+.field {
+	    margin: 10px 1px 5px 0px;
+	
+}
+.semi-square {
+   -webkit-border-radius: 5px;
+   -moz-border-radius: 5px;
+   border-radius: 5px;
+   border: 1px solid #ccc;
+}
+#time_div, #chip_div {
+	display: none;	
+}
+#divTable
+{
+	position:relative;
+	display:none;
+	width:auto;
+	background-color:#eee;
+	border:1px solid  #666666;
+	border-spacing:5px;/*cellspacing:poor IE support for  this*/
+   /* border-collapse:separate;*/
+   margin-top: 10px;
+   margin-left: auto;
+   margin-right: auto;
+}
+
+.divRow
+{
+   display:table-row;
+   width:auto;
+}
+
+.divCell
+{
+	float:left;/*fix for  buggy browsers*/
+	display:table-column;
+	width:200px;
+	background-color:#ccc;
+	text-align:right;
+}
