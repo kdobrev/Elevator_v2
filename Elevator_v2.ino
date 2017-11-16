@@ -4,32 +4,44 @@
 #include <Hash.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <SPIFFSEditor.h>
+//#include <SPIFFSEditor.h>
 
 int readStringFromSerial(char *buffer, int max_len );
 void serialFlush();
 
+File uploadFile;
+void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+
 // SKETCH BEGIN
 AsyncWebServer server(80);
 const char* http_username = "admin";
-const char* http_password = "";
-const char* ssid = "Elevator";
+const char* http_password = "admin";
+const char* ssid = "July";
 const char* ssid_password = "";
+const char * hostName = "esp-async";
 //flag to use from web update to reboot the ESP
 bool shouldReboot = false;
 
 void setup() {
   Serial.begin(9600);
   Serial.setDebugOutput(false);
+  //  WiFi.mode(WIFI_AP_STA);
+  //  WiFi.softAP(ssid, ssid_password, 1, 0);
+  //  //ssid, password, channel, hidden
+  WiFi.hostname(hostName);
   WiFi.mode(WIFI_AP_STA);
-
-  WiFi.softAP(ssid, ssid_password, 1, 0);
-  //ssid, password, channel, hidden
-
+  WiFi.softAP(hostName);
+  WiFi.begin(ssid, ssid_password);
+  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.printf("STA: Failed!\n");
+    WiFi.disconnect(false);
+    delay(1000);
+    WiFi.begin(ssid, ssid_password);
+  }
   MDNS.addService("http", "tcp", 80);
 
   SPIFFS.begin();
-  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+  //  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     if (request->hasParam("action") && request->hasParam("chip1")) {
       String getaction = request->getParam("action")->value().c_str();
@@ -37,13 +49,29 @@ void setup() {
       serialFlush();
       Serial.println(getaction + getchip1);
       request->redirect("/");
-    }
-    //else {
-      //      if (!request->authenticate(http_username, http_password))
-      //        return request->requestAuthentication();
       //request->send(SPIFFS, "/index.html");
-    //}
+    }
+    else {
+      //      Serial.println("server on /");
+      //      if (!request->authenticate(http_username, http_password)) {
+      //        Serial.println(request);
+      //        return request->requestAuthentication();
+      //
+      request->send(SPIFFS, "/index.html");
+      //      }
+    }
   });
+
+  server.on("/admin.html", HTTP_POST, [](AsyncWebServerRequest * request) {
+    //    Serial.println("/admin.html post");
+    //    handleUpload();
+    //    request->send(SPIFFS, "/admin.html");
+    //  });
+    //  AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
+    //  response->addHeader("Connection", "close");
+    //  request->send(response);
+    request->send(SPIFFS, "/admin.html?status=uploaded");
+  }, handleUpload);
 
   server.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
 
@@ -163,6 +191,17 @@ void setup() {
       }
     }
   });
+  //  // Admin dialog
+  //   server.addHandler(new SPIFFSEditor(http_username,http_password));
+  // HTTP basic authentication
+  //  server.on("/admin.html", HTTP_GET, [](AsyncWebServerRequest * request) {
+  //    if (!request->authenticate(http_username, http_password)) {
+  //      return request->requestAuthentication();
+  //      request->send(200, "text/plain", "Login Success!");
+  //    }
+  //  });
+
+  server.serveStatic("/admin.html", SPIFFS, "/admin.html").setAuthentication(http_username, http_password);
 
   server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
   server.begin();
@@ -205,6 +244,26 @@ int readStringFromSerial(char *buffer, int max_len )
 void serialFlush() {
   while (Serial.available() > 0) {
     char t = Serial.read();
+  }
+}
+
+void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+  if (!index) {
+    Serial.printf("UploadStart: %s\n", filename.c_str());
+    if (!filename.startsWith("/"))
+      filename = "/" + filename;
+    if (SPIFFS.exists(filename)) {
+      SPIFFS.remove(filename);
+    }
+    uploadFile = SPIFFS.open(filename, "w");
+    filename = String();
+  }
+  for (size_t i = 0; i < len; i++) {
+    uploadFile.write(data[i]);
+  }
+  if (final) {
+    uploadFile.close();
+    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index + len);
   }
 }
 void loop() {

@@ -38,12 +38,16 @@ var getFromBetween = {
         return this.results;
     }
 };
+
+//erase chip from the list AJAX
 function send_comand(chip_number) {
   var xhttp = new XMLHttpRequest;
   xhttp.open("POST", "/", true);
   xhttp.send("action=erasen&chip1=" + chip_number);
   // window.location = window.location;
 }
+
+//get GET parameters
 function prepare_response() {
 	var all_get = decodeURIComponent(window.location.search);
 	var str = all_get.replace("?r=","");
@@ -71,11 +75,32 @@ function prepare_response() {
 		}		
 	}
 	else {
-		alert(str);
+		//alert(str);
 	}
-
 }
 
+//same as above using new functions
+function read_URI(){
+var search = new URLSearchParams(window.location.search);
+if (search.get("status") === "uploaded") {
+	while (i < 10) {
+		text += "The number is " + i;
+		i++;
+	}
+	//alert("uploaded");
+	var myWindow = window.open("", "", "width=200, height=100");
+	myWindow.document.write("<p>This is 'myWindow'</p>");
+	setTimeout(function(){ myWindow.close() }, 3000); 
+	}
+}
+
+function file_upload() {
+	var xhr = new XMLHttpRequest();
+	var formData = new FormData( document.getElementById("file_upload"));
+	xhr.open("POST", "/admin.html", true);
+	xhr.send(formData);
+}
+//ajax stuff
 function showVal(m) {
   var xhttp = new XMLHttpRequest;
   xhttp.open("POST", "/storm", true);
@@ -83,6 +108,7 @@ function showVal(m) {
   window.location = window.location;
 }
 
+//add eros to number because protocol expects 001 and not just 1
 function zeros(id, num, i) {
 	$selection = document.getElementById(id);
 	var s = i + num;
@@ -102,6 +128,8 @@ function show(id) {
   //if (div.style.display == 'none')
     div.style.display = 'block';
 }
+
+//selector to show and hide fields in relation to the drop down menu
 function input_fields(value) {
 	if (value == "save")	{ show('chip_div'); show('ap_div'); hide('wait_div'); hide('time_div') }
 	if (value == "wait")	{ hide('chip_div'); show('ap_div'); show('wait_div'); hide('time_div') }
@@ -111,6 +139,8 @@ function input_fields(value) {
 	if ( value == "gunlock"){ hide('chip_div'); show('ap_div'); hide('wait_div'); hide('time_div') }
 	if ( value == "time")	{ hide('chip_div'); hide('ap_div'); hide('wait_div'); show('time_div') }
 }
+
+//replace the input type from text to number
 function replace() {
 	if(document.getElementById('chip1').type == 'number') 
 	{
@@ -125,6 +155,7 @@ function replace() {
 	}	
 }
 
+//add additional fields for chips
 function addFields(){
 	if(document.querySelectorAll('input[name^="chip"]').length == 1) {
 		var container = document.getElementById("chip_div");

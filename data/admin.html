@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Асансьор v2 администрация</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <link href="style.css" rel="stylesheet" />
+    <script src="script.js"></script>
+  </head>
+  <body onload = "prepare_response(); read_URI();">
+    <div class="header semi-square">
+      <span>
+        <a href="/">Начало</a>
+      </span>
+    </div>
+	<div id="divTable">
+      <div class="divRow">
+        <div class="divCell" align="center">Намерени чип номера</div>
+      </div>
+    </div>
+	<div>
+	<form method="post" id="file_upload" enctype="multipart/form-data">
+		<div class="field">
+		<label for="file">Избери файл за качване:</label>
+		<input type="file" id="file" name="file" class="semi-square" />
+		<input type="button" value="Въведи" class="semi-square" onclick="file_upload();" /> 
+		<input type="reset" value="Изчисти" class="semi-square" />
+		</div>
+	</form>
+	<form>
+		<div class="field">
+		<input type="submit" value="Свали файл" class="semi-square" />
+		<a href="/backup.bin">backup.bin</a>
+		</div>
+	</form>
+	</div>
+    <div class="footer">
+      <span>http://protectorbg.com/</span>
+    </div>
+  </body>
+</html>
