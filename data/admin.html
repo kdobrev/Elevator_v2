@@ -19,20 +19,23 @@
       </div>
     </div>
 	<div>
+	<div id="loader" class="loader_box">
+		<div class="loader"></div>
+	</div>
 	<form method="post" id="file_upload" enctype="multipart/form-data">
 		<div class="field">
-		<label for="file">Избери файл за качване:</label>
+		<label for="file">Избери файл за качване(.bin):</label>
 		<input type="file" id="file" name="file" class="semi-square" />
-		<input type="button" value="Въведи" class="semi-square" onclick="file_upload();" /> 
+		<input type="button" value="Качи" class="semi-square" onclick="file_upload();" /> 
 		<input type="reset" value="Изчисти" class="semi-square" />
 		</div>
 	</form>
-	<form>
-		<div class="field">
-		<input type="submit" value="Свали файл" class="semi-square" />
-		<a href="/backup.bin">backup.bin</a>
-		</div>
-	</form>
+	<div id="request_file" class="field">
+		<input type="button" value="Приготви файл" class="semi-square" onclick="request_file();" />
+	</div>
+	<div id="download_file" class="field hidden">
+		<input type="button" value="Свали файл" class="semi-square" onclick="javascript:location.href='backup.bin'" />
+	</div>
 	</div>
     <div class="footer">
       <span>http://protectorbg.com/</span>

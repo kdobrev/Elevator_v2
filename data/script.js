@@ -83,7 +83,8 @@ function prepare_response() {
 function read_URI(){
 var search = new URLSearchParams(window.location.search);
 if (search.get("status") === "uploaded") {
-	while (i < 10) {
+	while (transfer == "done") {
+		
 		text += "The number is " + i;
 		i++;
 	}
@@ -94,12 +95,31 @@ if (search.get("status") === "uploaded") {
 	}
 }
 
+function wait_for_transfer() {	
+	var container = document.getElementById("loader");
+//		container.setAttribute('class', 'loader');
+//		container.style.display = 'table';
+		hide("file_upload");
+		hide("request_file");
+		show("loader");
+		setTimeout(function() {hide("loader"); location.href="index.html"; }, 30000); // after 30 secs
+} 
+
 function file_upload() {
 	var xhr = new XMLHttpRequest();
 	var formData = new FormData( document.getElementById("file_upload"));
+	xhr.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			//document.getElementById("demo").innerHTML =
+			//this.responseText;
+			//alert(this.responseText);
+			if(this.responseText = "OK") wait_for_transfer();
+		}
+	};
 	xhr.open("POST", "/admin.html", true);
 	xhr.send(formData);
 }
+
 //ajax stuff
 function showVal(m) {
   var xhttp = new XMLHttpRequest;
@@ -121,12 +141,14 @@ function hide(id) {
   var div = document.getElementById(id);
   //if (div.style.display == 'block')
     div.style.display = 'none';
+  //div.style.visibility = 'hidden';
 }
 
 function show(id) {
   var div = document.getElementById(id);
   //if (div.style.display == 'none')
     div.style.display = 'block';
+  //div.style.visibility = 'visible';
 }
 
 //selector to show and hide fields in relation to the drop down menu

@@ -4,44 +4,48 @@
 #include <Hash.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-//#include <SPIFFSEditor.h>
+#include <SPIFFSEditor.h>
 
 int readStringFromSerial(char *buffer, int max_len );
 void serialFlush();
 
 File uploadFile;
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
+void outbound_transfer(String filename);
 
 // SKETCH BEGIN
 AsyncWebServer server(80);
 const char* http_username = "admin";
 const char* http_password = "admin";
-const char* ssid = "July";
+const char* ssid = "Elevator_v2";
 const char* ssid_password = "";
 const char * hostName = "esp-async";
 //flag to use from web update to reboot the ESP
 bool shouldReboot = false;
+unsigned int transferCommand = 0; //1 = inbound trasnfer; 2 = outbound transfer
+String cfg_name = "B8_KRP.txt";
 
 void setup() {
   Serial.begin(9600);
   Serial.setDebugOutput(false);
-  //  WiFi.mode(WIFI_AP_STA);
-  //  WiFi.softAP(ssid, ssid_password, 1, 0);
-  //  //ssid, password, channel, hidden
-  WiFi.hostname(hostName);
   WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(hostName);
-  WiFi.begin(ssid, ssid_password);
-  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("STA: Failed!\n");
-    WiFi.disconnect(false);
-    delay(1000);
-    WiFi.begin(ssid, ssid_password);
-  }
+  WiFi.softAP(ssid, ssid_password, 1, 0);
+  //ssid, password, channel, hidden
+  //  WiFi.hostname(hostName);
+  //  WiFi.mode(m): set mode to WIFI_AP, WIFI_STA, WIFI_AP_STA
+  //  WiFi.mode(WIFI_STA);
+  //  WiFi.softAP(hostName);
+  //  WiFi.begin(ssid, ssid_password);
+  //  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+  //    Serial.printf("STA: Failed!\n");
+  //    WiFi.disconnect(false);
+  //    delay(1000);
+  ////    WiFi.begin(ssid, ssid_password);
+  //  }
   MDNS.addService("http", "tcp", 80);
 
   SPIFFS.begin();
-  //  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     if (request->hasParam("action") && request->hasParam("chip1")) {
       String getaction = request->getParam("action")->value().c_str();
@@ -67,10 +71,10 @@ void setup() {
     //    handleUpload();
     //    request->send(SPIFFS, "/admin.html");
     //  });
-    //  AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
-    //  response->addHeader("Connection", "close");
-    //  request->send(response);
-    request->send(SPIFFS, "/admin.html?status=uploaded");
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
+    response->addHeader("Connection", "close");
+    request->send(response);
+    //request->send(SPIFFS, "/admin.html?status=uploaded");
   }, handleUpload);
 
   server.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
@@ -192,7 +196,8 @@ void setup() {
     }
   });
   //  // Admin dialog
-  //   server.addHandler(new SPIFFSEditor(http_username,http_password));
+
+  server.addHandler(new SPIFFSEditor(http_username, http_password));
   // HTTP basic authentication
   //  server.on("/admin.html", HTTP_GET, [](AsyncWebServerRequest * request) {
   //    if (!request->authenticate(http_username, http_password)) {
@@ -247,30 +252,75 @@ void serialFlush() {
   }
 }
 
+void outbound_transfer(String filename) {
+  //filename = "/style.css";
+  filename = "/" + cfg_name;
+  File f = SPIFFS.open(filename, "r");
+  size_t fsize = f.size();
+  const byte numChars = 512;
+  String receivedConfirmation;
+  byte rc;
+  bool moredata = 1;
+  while (moredata == 1) {
+    for (int i = 0; moredata == 1 && i < numChars; i++) {
+        rc = f.read();
+        Serial.print(rc);
+        if(f.available() > 0) moredata = 1;
+        else moredata = 0;
+    }
+    while (!Serial.available()) {
+      yield();
+      delay(500);
+      //Serial.println("Waiting for 'OK!'");
+    }
+    for (int k = 0; receivedConfirmation != "OK"; ) {
+      while (Serial.available() > 0) {
+        char t = Serial.read();
+        receivedConfirmation += t;
+        Serial.println(receivedConfirmation);
+      }
+//      delay(2000);
+//      yield();
+//      Serial.println("Stuck in the nothingness");
+    }
+  }
+  f.close();
+  transferCommand = 0;
+}
+
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   if (!index) {
-    Serial.printf("UploadStart: %s\n", filename.c_str());
+    //Serial.printf("UploadStart: %s\n", filename.c_str());
     if (!filename.startsWith("/"))
-      filename = "/" + filename;
+      filename = "/" + cfg_name;
     if (SPIFFS.exists(filename)) {
       SPIFFS.remove(filename);
     }
-    uploadFile = SPIFFS.open(filename, "w");
-    filename = String();
+    //insted of uploadFile
+    request->_tempFile = SPIFFS.open(filename, "w");
+    //filename = String();
   }
   for (size_t i = 0; i < len; i++) {
-    uploadFile.write(data[i]);
+    request->_tempFile.write(data[i]);
   }
   if (final) {
-    uploadFile.close();
-    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index + len);
+    request->_tempFile.close();
+    //    uploadFile = SPIFFS.open(filename, "r");
+    //    if(!uploadFile) Serial.printf("Greshka: %s, %u B\n", filename.c_str(), index + len);
+    //    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index + len);
+    //outbound_transfer(filename);
+    transferCommand = 2;
   }
 }
 void loop() {
   //  String str;
   //  str = Serial.readString();
   //
-  //  Serial.println(str);
+  yield();
+  delay(5000);
+    Serial.println(cfg_name);
+    Serial.println(transferCommand);
+  if (transferCommand == 2) outbound_transfer(cfg_name);
 
   if (shouldReboot) {
     //Serial.println("Rebooting...");
