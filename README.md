@@ -14,3 +14,8 @@
 
 трансфер: 256bytes, чакам ОК1, 256bytes, чакам ОК2 .... до ОК256
 
+192.168.4.1
+/index.html
+/admin.html 
+  Username: admin
+  Password: admin
