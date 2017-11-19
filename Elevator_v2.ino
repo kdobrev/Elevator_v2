@@ -20,8 +20,8 @@ const char* http_password = "admin";
 const char* ssid = "Elevator_v2";
 const char* ssid_password = "";
 const char * hostName = "esp-async";
-//flag to use from web update to reboot the ESP
-bool shouldReboot = false;
+
+bool shouldReboot = false; //flag to use from web update to reboot the ESP
 unsigned int transferCommand = 0; //1 = inbound trasnfer; 2 = outbound transfer
 String cfg_name = "B8_KRP.txt";
 
@@ -260,28 +260,35 @@ void outbound_transfer(String filename) {
   const byte numChars = 512;
   String receivedConfirmation;
   byte rc;
-  bool moredata = 1;
+  bool moredata = 1; //there are bytes in the file that need to be send
   while (moredata == 1) {
-    for (int i = 0; moredata == 1 && i < numChars; i++) {
-        rc = f.read();
-        Serial.print(rc);
-        if(f.available() > 0) moredata = 1;
-        else moredata = 0;
+    //read file f and send byte by byte up to numChars bytes (512)
+    for (int i = 0; moredata == 1 && i < 512; i++) {
+      rc = f.read();
+      Serial.print(rc);
+      if (f.available() > 0) {
+        moredata = 1;
+        // Serial.println("moredata = 1");
+      }
+      else moredata = 0;
     }
+    //Wait until the remote MCU is ready and send a response
     while (!Serial.available()) {
       yield();
-      delay(500);
-      //Serial.println("Waiting for 'OK!'");
+      delay(1000);
+      //      Serial.println("Waiting for 'OK'");
     }
+    //read the response from the remote MCU
+    receivedConfirmation = "";
     for (int k = 0; receivedConfirmation != "OK"; ) {
       while (Serial.available() > 0) {
         char t = Serial.read();
         receivedConfirmation += t;
-        Serial.println(receivedConfirmation);
       }
-//      delay(2000);
-//      yield();
-//      Serial.println("Stuck in the nothingness");
+      //      Serial.println(receivedConfirmation);
+      //      delay(2000);
+      //      yield();
+      //      Serial.println("Stuck in the nothingness");
     }
   }
   f.close();
@@ -309,7 +316,7 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
     //    if(!uploadFile) Serial.printf("Greshka: %s, %u B\n", filename.c_str(), index + len);
     //    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index + len);
     //outbound_transfer(filename);
-    transferCommand = 2;
+    transferCommand = 2; //change the command so main loop can trigger the outbound transfer
   }
 }
 void loop() {
@@ -317,9 +324,9 @@ void loop() {
   //  str = Serial.readString();
   //
   yield();
-  delay(5000);
-    Serial.println(cfg_name);
-    Serial.println(transferCommand);
+  delay(1000);
+  //  Serial.println(cfg_name);
+  //  Serial.println(transferCommand);
   if (transferCommand == 2) outbound_transfer(cfg_name);
 
   if (shouldReboot) {
