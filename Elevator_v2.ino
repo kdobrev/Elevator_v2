@@ -265,7 +265,7 @@ void outbound_transfer(String filename) {
     //read file f and send byte by byte up to numChars bytes (512)
     for (int i = 0; moredata == 1 && i < 512; i++) {
       rc = f.read();
-      Serial.print(rc);
+      Serial.write(rc);
       if (f.available() > 0) {
         moredata = 1;
         // Serial.println("moredata = 1");
