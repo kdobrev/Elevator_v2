@@ -71,7 +71,24 @@ void setup() {
     //    handleUpload();
     //    request->send(SPIFFS, "/admin.html");
     //  });
-    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "OK");
+    //    AsyncWebParameter* p = request->getParam("file");
+    //    if (p->isFile()) { //p->isPost() is also true
+    //    if (request->getParam("file", true)->isFile()) {
+    //      Serial.print("File uploaded");
+    //      //      Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+    //    }
+    //    else {
+    //      Serial.print("No file uploaded");
+    //    }
+    //    int args = request->args();
+    //    for (int i = 0; i < args; i++) {
+    //      Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
+    //    }
+    String rtcode;
+    if (request->hasParam("file", true, true)) rtcode = "OK";
+    else rtcode = "FAIL";
+    
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", rtcode);
     response->addHeader("Connection", "close");
     request->send(response);
     //request->send(SPIFFS, "/admin.html?status=uploaded");
@@ -261,6 +278,9 @@ void outbound_transfer(String filename) {
   String receivedConfirmation;
   byte rc;
   bool moredata = 1; //there are bytes in the file that need to be send
+  //prepare receiver
+  Serial.print("rcv");
+  delay(50);
   while (moredata == 1) {
     //read file f and send byte by byte up to numChars bytes (512)
     for (int i = 0; moredata == 1 && i < 512; i++) {
@@ -268,7 +288,6 @@ void outbound_transfer(String filename) {
       Serial.write(rc);
       if (f.available() > 0) {
         moredata = 1;
-        // Serial.println("moredata = 1");
       }
       else moredata = 0;
     }
@@ -285,10 +304,6 @@ void outbound_transfer(String filename) {
         char t = Serial.read();
         receivedConfirmation += t;
       }
-      //      Serial.println(receivedConfirmation);
-      //      delay(2000);
-      //      yield();
-      //      Serial.println("Stuck in the nothingness");
     }
   }
   f.close();
@@ -320,13 +335,9 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
   }
 }
 void loop() {
-  //  String str;
-  //  str = Serial.readString();
-  //
+
   yield();
-  delay(1000);
-  //  Serial.println(cfg_name);
-  //  Serial.println(transferCommand);
+
   if (transferCommand == 2) outbound_transfer(cfg_name);
 
   if (shouldReboot) {

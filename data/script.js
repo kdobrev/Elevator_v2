@@ -110,10 +110,7 @@ function file_upload() {
 	var formData = new FormData( document.getElementById("file_upload"));
 	xhr.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
-			//document.getElementById("demo").innerHTML =
-			//this.responseText;
-			//alert(this.responseText);
-			if(this.responseText = "OK") wait_for_transfer();
+			if(this.responseText == "OK") wait_for_transfer();
 		}
 	};
 	xhr.open("POST", "/admin.html", true);
