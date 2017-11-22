@@ -23,6 +23,7 @@ const char * hostName = "esp-async";
 
 bool shouldReboot = false; //flag to use from web update to reboot the ESP
 unsigned int transferCommand = 0; //1 = inbound trasnfer; 2 = outbound transfer
+bool inbound_transfer = 1; //inbound trasnfer
 String cfg_name = "B8_KRP.txt";
 
 void setup() {
@@ -67,32 +68,31 @@ void setup() {
   });
 
   server.on("/admin.html", HTTP_POST, [](AsyncWebServerRequest * request) {
-    //    Serial.println("/admin.html post");
-    //    handleUpload();
-    //    request->send(SPIFFS, "/admin.html");
-    //  });
-    //    AsyncWebParameter* p = request->getParam("file");
-    //    if (p->isFile()) { //p->isPost() is also true
-    //    if (request->getParam("file", true)->isFile()) {
-    //      Serial.print("File uploaded");
-    //      //      Serial.printf("FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-    //    }
-    //    else {
-    //      Serial.print("No file uploaded");
-    //    }
-    //    int args = request->args();
-    //    for (int i = 0; i < args; i++) {
-    //      Serial.printf("ARG[%s]: %s\n", request->argName(i).c_str(), request->arg(i).c_str());
-    //    }
     String rtcode;
-    if (request->hasParam("file", true, true)) rtcode = "OK";
-    else rtcode = "FAIL";
-    
+
+    //upload file
+    if (request->hasParam("file", true, true)) {
+      rtcode = "OK";
+      //      handleUpload();
+      //      handleUpload(request, filename, size_t index, uint8_t *data, size_t len, bool final);
+    }
+
+    //do not upload file, do something else
+    else if (request->hasParam("prepare_file", true)) {
+      rtcode = "PREP";
+      inbound_transfer = 1;
+    }
+
+    //do nothing
+    else {
+      rtcode = "FAIL";
+    }
+
     AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", rtcode);
     response->addHeader("Connection", "close");
     request->send(response);
-    //request->send(SPIFFS, "/admin.html?status=uploaded");
   }, handleUpload);
+  //  });
 
   server.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
 

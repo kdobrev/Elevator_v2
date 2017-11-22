@@ -117,6 +117,22 @@ function file_upload() {
 	xhr.send(formData);
 }
 
+function request_file() {
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			if(this.responseText == "PREP") {	
+				hide("file_upload");
+				hide("request_file");
+				setTimeout(function() {hide("loader");}, 30000); // after 30 secs
+				show("download_file");
+			}
+		}
+	};
+	xhr.open("POST", "/admin.html", true);
+	xhr.send("prepare_file=yes");
+}
+
 //ajax stuff
 function showVal(m) {
   var xhttp = new XMLHttpRequest;
