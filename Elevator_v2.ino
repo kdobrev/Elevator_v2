@@ -1,3 +1,4 @@
+
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <FS.h>
@@ -5,6 +6,7 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
+#include <ArduinoJson.h>
 
 int readStringFromSerial(char *buffer, int max_len );
 void serialFlush();
@@ -12,6 +14,7 @@ void serialFlush();
 File uploadFile;
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 void outbound_transfer(String filename);
+String check_filename();
 
 // SKETCH BEGIN
 AsyncWebServer server(80);
@@ -25,6 +28,7 @@ bool shouldReboot = false; //flag to use from web update to reboot the ESP
 unsigned int transferCommand = 0; //1 = inbound trasnfer; 2 = outbound transfer
 bool inbound_transfer = 1; //inbound trasnfer
 String cfg_name = "B8_KRP.txt";
+String backup_bin;
 
 void setup() {
   Serial.begin(9600);
@@ -47,6 +51,8 @@ void setup() {
 
   SPIFFS.begin();
 
+  backup_bin = check_filename();
+
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
     if (request->hasParam("action") && request->hasParam("chip1")) {
       String getaction = request->getParam("action")->value().c_str();
@@ -67,21 +73,45 @@ void setup() {
     }
   });
 
+  server.on("/ajax", HTTP_POST, [](AsyncWebServerRequest * request) {
+    String action;
+    String rtcode;
+    if (request->hasParam("action", true)) {
+      action = request->getParam("action", true)->value();
+      if (action == "snd_file") {
+        rtcode = "PREP";
+        inbound_transfer = 1;
+      }
+      else if (action == "chk_config") {
+        if (backup_bin != "")  rtcode = "CONFIG_OK";
+        else rtcode = "NO_CONFIG";
+      }
+    }
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", rtcode);
+    response->addHeader("Connection", "close");
+    request->send(response);
+  });
+
   server.on("/admin.html", HTTP_POST, [](AsyncWebServerRequest * request) {
     String rtcode;
+    String action;
 
     //upload file
     if (request->hasParam("file", true, true)) {
       rtcode = "OK";
-      //      handleUpload();
-      //      handleUpload(request, filename, size_t index, uint8_t *data, size_t len, bool final);
     }
 
-    //do not upload file, do something else
-    else if (request->hasParam("prepare_file", true)) {
-      rtcode = "PREP";
-      inbound_transfer = 1;
-    }
+    //    //do not upload file, do something else
+    //    else if (request->hasParam("action", true)) {
+    //      action = request->getParam("action", true)->value();
+    //      if (action == "snd_file") {
+    //        rtcode = "PREP";
+    //        inbound_transfer = 1;
+    //      }
+    //      else if (action == "chk_config") {
+    //
+    //      }
+    //    }
 
     //do nothing
     else {
@@ -92,7 +122,7 @@ void setup() {
     response->addHeader("Connection", "close");
     request->send(response);
   }, handleUpload);
-  //  });
+
 
   server.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
 
@@ -229,6 +259,46 @@ void setup() {
   server.begin();
 }
 
+//check if config.json exists and filename for backup is valid
+String check_filename() {
+  if (SPIFFS.exists("/config.json")) {
+    File f = SPIFFS.open("/config.json", "r");
+    int fileSize = f.size();
+    if (fileSize > 255) {
+      f.close();
+      SPIFFS.remove("config.json");
+      File f = SPIFFS.open("/config.json", "w+");
+      f.close();
+    }
+  }
+  else {
+    File f = SPIFFS.open("/config.json", "w+");
+    f.close();
+  }
+
+  File f = SPIFFS.open("/config.json", "r");
+  int fileSize = f.size();
+
+  // Allocate a buffer to store contents of the file.
+  std::unique_ptr<char[]> buf(new char[fileSize]);
+
+  f.readBytes(buf.get(), fileSize);
+  f.close();
+
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(buf.get());
+  if (!root.success()) {
+    Serial.println("parseObject() failed");
+    //return null;
+  }
+  const char* filename = root["filename"];
+  //  if (strlen(filename) == 0) //return null;
+  //  else {
+  //  Serial.println(filename);
+  return filename;
+  //  }
+}
+
 int readStringFromSerial(char *buffer, int max_len )
 {
   int pos = 0;
@@ -291,15 +361,17 @@ void outbound_transfer(String filename) {
       }
       else moredata = 0;
     }
-    //Wait until the remote MCU is ready and send a response
-    while (!Serial.available()) {
-      yield();
-      delay(1000);
-      //      Serial.println("Waiting for 'OK'");
-    }
+    //    //Wait until the remote MCU is ready and send a response
+    //    while (!Serial.available()) {
+    //      yield();
+    //      delay(1000);
+    //      //      Serial.println("Waiting for 'OK'");
+    //    }
     //read the response from the remote MCU
     receivedConfirmation = "";
     for (int k = 0; receivedConfirmation != "OK"; ) {
+      yield();
+      delay(1000);
       while (Serial.available() > 0) {
         char t = Serial.read();
         receivedConfirmation += t;
@@ -310,7 +382,7 @@ void outbound_transfer(String filename) {
   transferCommand = 0;
 }
 
-void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
+void handleUpload(AsyncWebServerRequest * request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   if (!index) {
     //Serial.printf("UploadStart: %s\n", filename.c_str());
     if (!filename.startsWith("/"))
@@ -334,6 +406,7 @@ void handleUpload(AsyncWebServerRequest *request, String filename, size_t index,
     transferCommand = 2; //change the command so main loop can trigger the outbound transfer
   }
 }
+
 void loop() {
 
   yield();

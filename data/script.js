@@ -117,7 +117,7 @@ function file_upload() {
 	xhr.send(formData);
 }
 
-function request_file() {
+function request(action) {
 	var xhr = new XMLHttpRequest();
 	xhr.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
@@ -127,10 +127,24 @@ function request_file() {
 				setTimeout(function() {hide("loader");}, 30000); // after 30 secs
 				show("download_file");
 			}
+			else if(this.responseText == "NO_CONFIG") {	
+				hide("file_upload");
+				hide("request_file");
+				hide("loader");
+				hide("download_file");
+				
+			}
+			else if(this.responseText == "CONFIG_OK") {	
+				show("file_upload");
+				show("request_file");
+				hide("loader");
+				hide("download_file");
+				hide("set_config_div");				
+			}
 		}
 	};
-	xhr.open("POST", "/admin.html", true);
-	xhr.send("prepare_file=yes");
+	xhr.open("POST", "/ajax", true);
+	xhr.send("action="+action);
 }
 
 //ajax stuff
