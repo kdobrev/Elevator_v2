@@ -121,29 +121,41 @@ function request(action) {
 	var xhr = new XMLHttpRequest();
 	xhr.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
+			
 			if(this.responseText == "PREP") {	
 				hide("file_upload");
 				hide("request_file");
 				setTimeout(function() {hide("loader");}, 30000); // after 30 secs
 				show("download_file");
+				hide("set_config_div");
 			}
 			else if(this.responseText == "NO_CONFIG") {	
 				hide("file_upload");
 				hide("request_file");
 				hide("loader");
 				hide("download_file");
-				
+				show("set_config_div");
 			}
 			else if(this.responseText == "CONFIG_OK") {	
 				show("file_upload");
 				show("request_file");
 				hide("loader");
 				hide("download_file");
-				hide("set_config_div");				
+				hide("set_config_div");	
+			}
+			else {
+				hide("file_upload");
+				hide("request_file");
+				hide("loader");
+				hide("download_file");
+				hide("set_config_div");
+				document.getElementById("set_config_div").innerHTML = "<p> Error, please reload the page </p>";
 			}
 		}
 	};
 	xhr.open("POST", "/ajax", true);
+	//Send the proper header information along with the request
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 	xhr.send("action="+action);
 }
 

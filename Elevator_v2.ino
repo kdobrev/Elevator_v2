@@ -63,13 +63,7 @@ void setup() {
       //request->send(SPIFFS, "/index.html");
     }
     else {
-      //      Serial.println("server on /");
-      //      if (!request->authenticate(http_username, http_password)) {
-      //        Serial.println(request);
-      //        return request->requestAuthentication();
-      //
       request->send(SPIFFS, "/index.html");
-      //      }
     }
   });
 
@@ -77,7 +71,7 @@ void setup() {
     String action;
     String rtcode;
     if (request->hasParam("action", true)) {
-      action = request->getParam("action", true)->value();
+      action = request->getParam("action", true)->value().c_str();
       if (action == "snd_file") {
         rtcode = "PREP";
         inbound_transfer = 1;
@@ -87,6 +81,7 @@ void setup() {
         else rtcode = "NO_CONFIG";
       }
     }
+    else rtcode = "FAIL";
     AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", rtcode);
     response->addHeader("Connection", "close");
     request->send(response);
@@ -100,18 +95,6 @@ void setup() {
     if (request->hasParam("file", true, true)) {
       rtcode = "OK";
     }
-
-    //    //do not upload file, do something else
-    //    else if (request->hasParam("action", true)) {
-    //      action = request->getParam("action", true)->value();
-    //      if (action == "snd_file") {
-    //        rtcode = "PREP";
-    //        inbound_transfer = 1;
-    //      }
-    //      else if (action == "chk_config") {
-    //
-    //      }
-    //    }
 
     //do nothing
     else {
@@ -242,16 +225,8 @@ void setup() {
       }
     }
   });
-  //  // Admin dialog
 
   server.addHandler(new SPIFFSEditor(http_username, http_password));
-  // HTTP basic authentication
-  //  server.on("/admin.html", HTTP_GET, [](AsyncWebServerRequest * request) {
-  //    if (!request->authenticate(http_username, http_password)) {
-  //      return request->requestAuthentication();
-  //      request->send(200, "text/plain", "Login Success!");
-  //    }
-  //  });
 
   server.serveStatic("/admin.html", SPIFFS, "/admin.html").setAuthentication(http_username, http_password);
 
@@ -273,6 +248,10 @@ String check_filename() {
   }
   else {
     File f = SPIFFS.open("/config.json", "w+");
+    //    StaticJsonBuffer<200> jsonBuffer;
+    //    JsonObject& json = jsonBuffer.createObject();
+    //    json["filename"] = "backup";
+    //    json.printTo(f);
     f.close();
   }
 
@@ -289,14 +268,11 @@ String check_filename() {
   JsonObject& root = jsonBuffer.parseObject(buf.get());
   if (!root.success()) {
     Serial.println("parseObject() failed");
-    //return null;
   }
-  const char* filename = root["filename"];
-  //  if (strlen(filename) == 0) //return null;
-  //  else {
-  //  Serial.println(filename);
-  return filename;
-  //  }
+  else {
+    const char* filename = root["filename"];
+    return filename;
+  }
 }
 
 int readStringFromSerial(char *buffer, int max_len )

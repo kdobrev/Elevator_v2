@@ -107,8 +107,11 @@ a:hover{
 	background-color:#ccc;
 	text-align:right;
 }
+.no_show{
+	display:none;
+}
 #request_file {
-	
+
 }
 #download_file {
 	display:none;
