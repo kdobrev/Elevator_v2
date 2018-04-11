@@ -7,7 +7,7 @@
     <link href="style.css" rel="stylesheet" />
     <script src="script.js"></script>
   </head>
-  <body onload="request('chk_config'); read_URI();">
+  <body onload="request({arg1 : 'chk_config'}); read_URI();">
     <div class="header semi-square">
       <span>
         <a href="/">Начало</a>
@@ -22,10 +22,10 @@
 	<div id="loader" class="loader_box">
 		<div class="loader"></div>
 	</div>
-	<div id="set_config_div" class="no_show">
+	<div id="set_config_div" class="no_show_">
 		<form method="post" id="set_config" >
-			<input type="text" name="config_name" class="semi-square" mixlength="5" maxlength="8" />
-			<input type="button" value="Въведи име на блок" class="semi-square" onclick="request('set_config');" /> 
+			<input type="text" name="config_name" id="config_name" class="semi-square" mixlength="5" maxlength="8" />
+			<input type="button" value="Въведи име на блок" class="semi-square" onclick="request({arg1 : 'set_config' });" /> 
 		</form>
 	</div>
 	<form method="post" id="file_upload" class="no_show" enctype="multipart/form-data">
@@ -37,7 +37,7 @@
 		</div>
 	</form>
 	<div id="request_file" class="field no_show">
-		<input type="button" value="Приготви файл" class="semi-square" onclick="request('snd_file');" />
+		<input type="button" value="Приготви файл" class="semi-square" onclick="request({arg1 : 'snd_file'});" />
 	</div>
 	<div id="download_file" class="field no_show">
 		<input type="button" value="Свали файл" class="semi-square" onclick="javascript:location.href='backup.bin'" />

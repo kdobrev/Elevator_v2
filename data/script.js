@@ -117,46 +117,80 @@ function file_upload() {
 	xhr.send(formData);
 }
 
+//function used for ajax calls
+//set_config, chk_config
 function request(action) {
 	var xhr = new XMLHttpRequest();
 	xhr.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
-			
-			if(this.responseText == "PREP") {	
-				hide("file_upload");
-				hide("request_file");
-				setTimeout(function() {hide("loader");}, 30000); // after 30 secs
-				show("download_file");
-				hide("set_config_div");
+		function isJson(this.responseText) {
+			try {
+				JSON.parse(this.responseText);
+			} catch (e) {
+				if(this.responseText == "PREP") {	
+					hide("file_upload");
+					hide("request_file");
+					show("loader");
+					setTimeout(function() {hide("loader");}, 30000); // after 30 secs
+					show("download_file");
+					hide("set_config_div");
+				}
+				else if(this.responseText == "NO_CONFIG") {	
+					hide("file_upload");
+					hide("request_file");
+					hide("loader");
+					hide("download_file");
+					show("set_config_div");
+				}
+				else if(this.responseText == "CONFIG_OK") {	
+					show("file_upload");
+					show("request_file");
+					hide("loader");
+					hide("download_file");
+					hide("set_config_div");	
+				}
+				else if(this.responseText == "SET_CONFIG") {	
+					hide("file_upload");
+					hide("request_file");
+					show("loader");
+					setTimeout(function() {hide("loader"); location.replace(location.href)}, 2000); // after 2 secs
+					hide("download_file");
+					hide("set_config_div");
+				}
+				else {
+					hide("file_upload");
+					hide("request_file");
+					hide("loader");
+					hide("download_file");
+					hide("set_config_div");
+					document.getElementById("set_config_div").innerHTML = "<p> Error, please reload the page </p>";
+				}
 			}
-			else if(this.responseText == "NO_CONFIG") {	
-				hide("file_upload");
-				hide("request_file");
-				hide("loader");
-				hide("download_file");
-				show("set_config_div");
-			}
-			else if(this.responseText == "CONFIG_OK") {	
-				show("file_upload");
-				show("request_file");
-				hide("loader");
-				hide("download_file");
-				hide("set_config_div");	
-			}
-			else {
-				hide("file_upload");
-				hide("request_file");
-				hide("loader");
-				hide("download_file");
-				hide("set_config_div");
-				document.getElementById("set_config_div").innerHTML = "<p> Error, please reload the page </p>";
+			//json read
+			function isJSON(MyTestStr){
+				try {
+					var MyJSON = JSON.stringify(MyTestStr);
+					var json = JSON.parse(MyJSON);
+					if(typeof(MyTestStr) == 'string')
+						if(MyTestStr.length == 0)
+							return false;
+				}
+				catch(e){
+					return false;
+				}
+				return true;
 			}
 		}
+
+		}
 	};
+	//since config_name.value is needed only when sending action=set_config we check and exit if config_name.value is empty
+	//otherwise just continue
+	if(action.arg1 == 'set_config' && document.getElementById('config_name').value == '') { exit(); }
 	xhr.open("POST", "/ajax", true);
 	//Send the proper header information along with the request
 	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.send("action="+action);
+	xhr.send("action="+action.arg1+"&config_name="+document.getElementById('config_name').value);
 }
 
 //ajax stuff

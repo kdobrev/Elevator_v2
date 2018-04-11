@@ -14,6 +14,7 @@ void serialFlush();
 File uploadFile;
 void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final);
 void outbound_transfer(String filename);
+void inbound_transfer();
 String check_filename();
 
 // SKETCH BEGIN
@@ -26,7 +27,7 @@ const char * hostName = "esp-async";
 
 bool shouldReboot = false; //flag to use from web update to reboot the ESP
 unsigned int transferCommand = 0; //1 = inbound trasnfer; 2 = outbound transfer
-bool inbound_transfer = 1; //inbound trasnfer
+char flagCommand = ' '; // ' ' = no command; 's' = set config;
 String cfg_name = "B8_KRP.txt";
 String backup_bin;
 
@@ -74,14 +75,20 @@ void setup() {
       action = request->getParam("action", true)->value().c_str();
       if (action == "snd_file") {
         rtcode = "PREP";
-        inbound_transfer = 1;
+        transferCommand = 1;
       }
       else if (action == "chk_config") {
         if (backup_bin != "")  rtcode = "CONFIG_OK";
         else rtcode = "NO_CONFIG";
       }
+      else if (action == "set_config") {
+        backup_bin = request->getParam("config_name", true)->value().c_str();
+        flagCommand = 's';
+        rtcode = "SET_CONFIG";
+      }
     }
     else rtcode = "FAIL";
+    //application/json
     AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", rtcode);
     response->addHeader("Connection", "close");
     request->send(response);
@@ -241,7 +248,7 @@ String check_filename() {
     int fileSize = f.size();
     if (fileSize > 255) {
       f.close();
-      SPIFFS.remove("config.json");
+      SPIFFS.remove("/config.json");
       File f = SPIFFS.open("/config.json", "w+");
       f.close();
     }
@@ -358,6 +365,48 @@ void outbound_transfer(String filename) {
   transferCommand = 0;
 }
 
+void inbound_transfer() {
+  String filename = "/backup.bin";
+  File f = SPIFFS.open(filename, "w+");
+  size_t fsize = f.size();
+  const byte numChars = 512;
+  String receivedConfirmation;
+  byte rc;
+  bool moredata = 1; //there are bytes in the file that need to be received
+  //prepare sender
+  Serial.print("snd");
+  delay(50);
+  while (moredata == 1) {
+    //read Serial and send byte by byte up to file f numChars bytes (512)
+    for (int i = 0; moredata == 1 && i < 512; i++) {
+      rc = Serial.read();
+      f.write(rc);
+      if (Serial.available() > 0) {
+        moredata = 1;
+      }
+      else moredata = 0;
+    }
+    //    //Wait until the remote MCU is ready and send a response
+    //    while (!Serial.available()) {
+    //      yield();
+    //      delay(1000);
+    //      //      Serial.println("Waiting for 'OK'");
+    //    }
+    //send the response to the remote MCU
+    //    receivedConfirmation = "";
+    //    for (int k = 0; receivedConfirmation != "OK"; ) {
+    //      yield();
+    //      delay(200);
+    //      while (Serial.available() > 0) {
+    //        char t = Serial.read();
+    //        receivedConfirmation += t;
+    //      }
+    //    }
+  }
+  f.close();
+  transferCommand = 0;
+}
+
 void handleUpload(AsyncWebServerRequest * request, String filename, size_t index, uint8_t *data, size_t len, bool final) {
   if (!index) {
     //Serial.printf("UploadStart: %s\n", filename.c_str());
@@ -382,12 +431,29 @@ void handleUpload(AsyncWebServerRequest * request, String filename, size_t index
     transferCommand = 2; //change the command so main loop can trigger the outbound transfer
   }
 }
+void set_config() {
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+  json["filename"] = backup_bin;
+
+  File f = SPIFFS.open("/config.json", "w");
+  //  if (!f) {
+  //    Serial.println("Failed to open config file for writing");
+  ////    return false;
+  //  }
+
+  json.printTo(f);
+  flagCommand = ' ';
+  //  return true;
+}
 
 void loop() {
 
   yield();
 
   if (transferCommand == 2) outbound_transfer(cfg_name);
+  if (transferCommand == 1) inbound_transfer();
+  if (flagCommand == 's') set_config();
 
   if (shouldReboot) {
     //Serial.println("Rebooting...");
