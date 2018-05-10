@@ -367,7 +367,10 @@ void outbound_transfer(String filename) {
 
 void inbound_transfer() {
   String filename = "/backup.bin";
-  File f = SPIFFS.open(filename, "w+");
+  if (SPIFFS.exists(filename)) {
+      SPIFFS.remove(filename);
+  }
+  File f = SPIFFS.open(filename, "w");
   size_t fsize = f.size();
   const byte numChars = 512;
   String receivedConfirmation;
