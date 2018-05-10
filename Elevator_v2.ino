@@ -34,7 +34,7 @@ String backup_bin;
 void setup() {
   Serial.begin(9600);
   Serial.setDebugOutput(false);
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid, ssid_password, 1, 0);
   //ssid, password, channel, hidden
   //  WiFi.hostname(hostName);
