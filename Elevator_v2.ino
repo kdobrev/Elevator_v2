@@ -378,7 +378,7 @@ void inbound_transfer() {
   bool moredata = 1; //there are bytes in the file that need to be received
   //prepare sender
   Serial.print("snd");
-  delay(50);
+  delay(250);
   while (moredata == 1) {
     //read Serial and send byte by byte up to file f numChars bytes (512)
     for (int i = 0; moredata == 1 && i < 512; i++) {
@@ -386,6 +386,15 @@ void inbound_transfer() {
       f.write(rc);
       if (Serial.available() > 0) {
         moredata = 1;
+        if (i == 127) {
+          Serial.print("128OK");
+          }
+        if (i == 255) {
+          Serial.print("255OK");
+          }          
+        yield();
+        delay(10);
+        yield();
       }
       else moredata = 0;
     }
