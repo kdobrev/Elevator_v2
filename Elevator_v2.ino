@@ -9,6 +9,7 @@
 #include <ArduinoJson.h>
 
 int readStringFromSerial(char *buffer, int max_len );
+int readByteFromSerial(byte *buffer, int max_len );
 void serialFlush();
 
 File uploadFile;
@@ -298,8 +299,8 @@ int readStringFromSerial(char *buffer, int max_len )
       return pos;
     }
   }
+  
   while (pos < max_len - 1) {
-
     if (Serial.available() > 0) {
       //      Serial.println("serial was available");
       int readch = Serial.read();
@@ -312,10 +313,48 @@ int readStringFromSerial(char *buffer, int max_len )
       }
     }
   }
+  
   //  Serial.println("buffer is filled; return");
   buffer[pos] = '\0';
   return pos;
 }
+
+int readByteFromSerial(byte *buffer, int max_len )
+{
+  int pos = 0;
+//  buffer[pos] = '\0';
+  //  Serial.println("enter in readstring and define vars");
+  unsigned long int init_time = millis();
+  unsigned long int wait_time = init_time + 1000;
+  while (!Serial.available())
+  {
+    //    Serial.println("enter waiting for serial");
+    if (millis() >= wait_time) {
+      // no responce - just leave
+      //      Serial.println("time is up");
+      return pos;
+    }
+  }
+  
+  while (pos < max_len - 1) {
+    if (Serial.available() > 0) {
+      //      Serial.println("serial was available");
+      byte readch = Serial.read();
+//      if (readch == '\n') {
+//        //        Serial.println("serial received \n");
+//        break;
+//      } else if (  pos < max_len - 1) {
+//        //        Serial.println("serial is filling up buffer");
+        buffer[pos++] = readch;
+//      }
+    }
+  }
+  
+  //  Serial.println("buffer is filled; return");
+//  buffer[pos] = '\0';
+  return pos;
+}
+
 void serialFlush() {
   while (Serial.available() > 0) {
     char t = Serial.read();
@@ -378,43 +417,60 @@ void inbound_transfer() {
   bool moredata = 1; //there are bytes in the file that need to be received
   //prepare sender
   Serial.print("snd");
-  delay(250);
+  delay(10);
   while (moredata == 1) {
-    //read Serial and send byte by byte up to file f numChars bytes (512)
-    for (int i = 0; moredata == 1 && i < 512; i++) {
-      rc = Serial.read();
-      f.write(rc);
-      if (Serial.available() > 0) {
-        moredata = 1;
-        if (i == 127) {
-          Serial.print("128OK");
-          }
-        if (i == 255) {
-          Serial.print("255OK");
-          }          
-        yield();
-        delay(10);
-        yield();
-      }
-      else moredata = 0;
+    // READ ANSWER FROM REMOTE DEVICE
+
+    byte buff[1024];
+
+    int len =  readByteFromSerial(buff, 1024);
+     
+    //serialFlush(); //read everithing from serial
+
+    if (len > 0) {
+      len = 0;
+      f.write(buff, 1024);
     }
-    //    //Wait until the remote MCU is ready and send a response
-    //    while (!Serial.available()) {
-    //      yield();
-    //      delay(1000);
-    //      //      Serial.println("Waiting for 'OK'");
-    //    }
-    //send the response to the remote MCU
-    //    receivedConfirmation = "";
-    //    for (int k = 0; receivedConfirmation != "OK"; ) {
-    //      yield();
-    //      delay(200);
-    //      while (Serial.available() > 0) {
-    //        char t = Serial.read();
-    //        receivedConfirmation += t;
-    //      }
-    //    }
-  }
+   if (Serial.available() > 0) {
+        moredata = 1;        
+        yield();
+    }
+    else moredata = 0;
+    }
+//    //read Serial and send byte by byte up to file f numChars bytes (512)
+//   byte inData[512];
+//    for (int i = 0; moredata == 1 && i < 512; i++) {
+//      inData[i] = Serial.read();
+//      //int k = Serial.read();
+//      //f.write(k);
+//      //f.write(rc);
+//      if (Serial.available() > 0) {
+//        moredata = 1;        
+//        yield();
+//      }
+//      else moredata = 0;
+//    }
+//    for (int i = 0; i < 512; i++) {
+//      f.write(inData[i]);
+//      yield();
+//    }
+//    //    //Wait until the remote MCU is ready and send a response
+//    //    while (!Serial.available()) {
+//    //      yield();
+//    //      delay(1000);
+//    //      //      Serial.println("Waiting for 'OK'");
+//    //    }
+//    //send the response to the remote MCU
+//    //    receivedConfirmation = "";
+//    //    for (int k = 0; receivedConfirmation != "OK"; ) {
+//    //      yield();
+//    //      delay(200);
+//    //      while (Serial.available() > 0) {
+//    //        char t = Serial.read();
+//    //        receivedConfirmation += t;
+//    //      }
+//    //    }
+//  }
   f.close();
   transferCommand = 0;
 }
