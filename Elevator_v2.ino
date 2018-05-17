@@ -348,7 +348,7 @@ int readByteFromSerial(byte *buffer, int max_len )
 //      } else if (  pos < max_len - 1) {
 //        //        Serial.println("serial is filling up buffer");
         buffer[pos] = readch;
-        pos++;
+        //pos++;
 //      }
     }
   }
