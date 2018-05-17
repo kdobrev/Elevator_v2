@@ -336,7 +336,9 @@ int readByteFromSerial(byte *buffer, int max_len )
     }
   }
   
-  while (pos < max_len - 1) {
+  //while (pos < max_len - 1) 
+  for (pos = 0; pos <= max_len - 1; pos++)
+  {
     if (Serial.available() > 0) {
       //      Serial.println("serial was available");
       byte readch = Serial.read();
