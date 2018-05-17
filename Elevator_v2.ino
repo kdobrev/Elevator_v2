@@ -336,8 +336,8 @@ int readByteFromSerial(byte *buffer, int max_len )
     }
   }
   
-  //while (pos < max_len - 1) 
-  for ( ; pos <= max_len - 1; pos++)
+  while (pos < max_len - 1) 
+  //for ( ; pos <= max_len - 1; pos++)
   {
     if (Serial.available() > 0) {
       //      Serial.println("serial was available");
@@ -348,7 +348,7 @@ int readByteFromSerial(byte *buffer, int max_len )
 //      } else if (  pos < max_len - 1) {
 //        //        Serial.println("serial is filling up buffer");
         buffer[pos] = readch;
-        //pos++;
+        pos++;
 //      }
     }
   }
@@ -432,7 +432,7 @@ void inbound_transfer() {
 
     if (len > 0) {
       len = 0;
-      f.write(buff, 1024);
+      f.write(buff, 1023);
     }
    if (Serial.available() > 0) {
         moredata = 1;        
