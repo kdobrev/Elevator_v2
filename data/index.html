@@ -22,7 +22,7 @@
       <form method="post">
 		  <div class="field">
 			<select name="action" class="field select-style semi-square blue" onchange="input_fields(this.value)">
-			  <option value="wait">Наказателно време</option>
+			  <!--option value="wait">Наказателно време</option>-->
 			  <option value="save">Добавяне на чип</option>
 			  <option value="checkg">Проверка по апартамент</option>
 			  <option value="glock">Блокиране апартамент</option>
@@ -35,10 +35,12 @@
 		  <label for="ap">Апартамент</label> 
 		  <input type="number" name="ap" id="ap" class="semi-square" autocomplete="off" min="1" max="255"
 		  onblur="zeros(this.id, this.value, &#39;00&#39;)" /></div>
+		  <!--
 		  <div class="field" id="wait_div">
 		  <label for="wait">Наказателно време</label> 
-		  <input type="number" name="wait" id="wait" class="semi-square" autocomplete="off" min="1" max="255"
-		  /></div>
+		  <input type="number" name="wait" id="wait" class="semi-square" autocomplete="off" min="1" max="255"/>
+		  </div>
+		  -->
 		  <div class="field" id="chip_div">
 		  <label for="chip">Чип номер</label> 
 		  <input type="number" name="chip1" id="chip1" class="semi-square" autocomplete="off" min="100000000" max="10999999999999"
