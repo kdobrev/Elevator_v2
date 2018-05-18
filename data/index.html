@@ -22,7 +22,6 @@
       <form method="post">
 		  <div class="field">
 			<select name="action" class="field select-style semi-square blue" onchange="input_fields(this.value)">
-			  <!--option value="wait">Наказателно време</option>-->
 			  <option value="save">Добавяне на чип</option>
 			  <option value="checkg">Проверка по апартамент</option>
 			  <option value="glock">Блокиране апартамент</option>
@@ -40,7 +39,7 @@
 		  <label for="wait">Наказателно време</label> 
 		  <input type="number" name="wait" id="wait" class="semi-square" autocomplete="off" min="1" max="255"/>
 		  </div>
-		  -->
+		  
 		  <div class="field" id="chip_div">
 		  <label for="chip">Чип номер</label>
 		  <input type="number" name="chip1" id="chip1" class="semi-square" autocomplete="off" min="100000000" max="10999999999999"
@@ -48,6 +47,7 @@
 		  <span id="multi" onclick="addFields()">
 			<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAm0lEQVQ4jdWQMarFUAhEx0CQVCHFTRGwSSsEs/9FzRJ8lY/bfCx+9QZOc8BBBf6biOD7vhkRBID7vvdyHRFBPM+TRRXMrgPuTndPd2dtNbkO/nXZL8XMaGZpZgSA4zj2yXUQ13VlUQWz68AYg+d55hjj+9FyHfPML0dVuW1bqmrds5frUFViXdcsqmB2HRARLsuSIvL9aLkOEeEHsk2jOSSyGTkAAAAASUVORK5CYII=" />
 		  </span></div>
+		  -->
 		  <div class="field" id="time_div">
 		  <label for="time">Време реле (отворено)</label> 
 		  <input type="number" name="time" id="time" class="semi-square" min="1" max="20"
